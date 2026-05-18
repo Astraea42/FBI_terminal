@@ -1,19 +1,6 @@
 {
-    "serverAddress": "localhost",
-    "serverName": "Node Y56 Intranet",
-    "iconName": "Moon-icon.png",
-    "terminalID": "Y56",
-    "defaultUser": {
-        "userId": "user",
-        "password": "",
-        "userName": "anonymous"
-    },
-    "initialHistory": {
-        "user": [
-            "login admin@admin"
-        ],
-        "admin": [
-            "ping fbi.gov"
-        ]
-    }
+    "serverAddress": "fbi.gov",
+    "serverName": "Federal Bureau of Investigation",
+    "iconName": "fbi.png",
+    "terminalID": "fbi"
 }
