@@ -367,6 +367,8 @@ system = {
                 resolve( [ "Usage:", "> grep keyword", "Search all messages and user data for the specified keyword." ] );
             } else if ( args[ 0 ] === "send" ) {
                 resolve( [ "Usage:", "> send [username]", "Send a message to another user. You will be prompted for details." ] );
+            } else if ( args[ 0 ] === "register" ) {
+                resolve( [ "Usage:", "> register [userId password displayName]", "Register a new user on this server. Omit arguments for interactive mode." ] );
             } else if ( args[ 0 ] === "ssh" ) {
                 resolve( [
                     "Usage:",
@@ -434,6 +436,60 @@ system = {
     exit() {
         return new Promise( () => {
             location.reload();
+        } );
+    },
+
+    register( args ) {
+        return new Promise( ( resolve, reject ) => {
+            function promptForUserId() {
+                readPrompt( "New user ID: " ).then( ( userId ) => {
+                    if ( !userId ) {
+                        reject( new UsernameIsEmptyError() );
+                        return;
+                    }
+                    if ( userList.find( ( u ) => u.userId === userId ) ) {
+                        reject( new UserAlreadyExistsError( userId ) );
+                        return;
+                    }
+                    promptForPassword( userId );
+                } );
+            }
+
+            function promptForPassword( userId ) {
+                readPrompt( "Password: " ).then( ( password ) => {
+                    promptForName( userId, password );
+                } );
+            }
+
+            function promptForName( userId, password ) {
+                readPrompt( "Display name: " ).then( ( userName ) => {
+                    userList.push( {
+                        userId: userId,
+                        password: password || "",
+                        userName: userName || userId
+                    } );
+                    resolve( `User ${ userId } registered successfully. You can now login with: login ${ userId }:${ password || "(no password)" }` );
+                } );
+            }
+
+            if ( args && args.length >= 2 ) {
+                const userId = args[ 0 ];
+                if ( userList.find( ( u ) => u.userId === userId ) ) {
+                    reject( new UserAlreadyExistsError( userId ) );
+                    return;
+                }
+                const password = args[ 1 ];
+                const userName = args.slice( 2 ).join( " " ) || userId;
+                userList.push( {
+                    userId: userId,
+                    password: password,
+                    userName: userName
+                } );
+                resolve( `User ${ userId } registered successfully. You can now login with: login ${ userId }:${ password }` );
+                return;
+            }
+
+            promptForUserId();
         } );
     },
 

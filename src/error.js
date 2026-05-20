@@ -113,3 +113,10 @@ class SendNoRecipientError extends FunctionalError {
         this.message = "Please specify a recipient. Usage: send username";
     }
 }
+
+class UserAlreadyExistsError extends FunctionalError {
+    constructor( userId ) {
+        super();
+        this.message = `User ${ userId } already exists.`;
+    }
+}
