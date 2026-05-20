@@ -92,3 +92,24 @@ class JsonFetchParseError extends FunctionalError {
         this.message = message;
     }
 }
+
+class SearchTermEmptyError extends FunctionalError {
+    constructor() {
+        super();
+        this.message = "Please provide a search term. Usage: grep keyword";
+    }
+}
+
+class SendRecipientNotFoundError extends FunctionalError {
+    constructor() {
+        super();
+        this.message = "Recipient not found. Available users: " + (typeof userList !== "undefined" ? userList.map( u => u.userId ).join( ", " ) : "");
+    }
+}
+
+class SendNoRecipientError extends FunctionalError {
+    constructor() {
+        super();
+        this.message = "Please specify a recipient. Usage: send username";
+    }
+}

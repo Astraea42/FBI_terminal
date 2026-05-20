@@ -363,6 +363,10 @@ system = {
                 ] );
             } else if ( args[ 0 ] === "read" ) {
                 resolve( [ "Usage:", "> read x", "If you're logged in you can read your mail messages if any." ] );
+            } else if ( args[ 0 ] === "grep" ) {
+                resolve( [ "Usage:", "> grep keyword", "Search all messages and user data for the specified keyword." ] );
+            } else if ( args[ 0 ] === "send" ) {
+                resolve( [ "Usage:", "> send [username]", "Send a message to another user. You will be prompted for details." ] );
             } else if ( args[ 0 ] === "ssh" ) {
                 resolve( [
                     "Usage:",
@@ -468,6 +472,97 @@ system = {
             message.push( "---------------------------------------------" );
             message = [ ...message, ...mailAtIndex.body.split( "  " ) ];
             resolve( message );
+        } );
+    },
+
+    grep( args ) {
+        return new Promise( ( resolve, reject ) => {
+            if ( !args || args.length === 0 ) {
+                reject( new SearchTermEmptyError() );
+                return;
+            }
+            const keyword = args.join( " " ).toLowerCase();
+            const results = [];
+
+            mailList.forEach( ( mail, i ) => {
+                if ( mail.title.toLowerCase().includes( keyword ) ||
+                     mail.body.toLowerCase().includes( keyword ) ) {
+                    results.push( `[mail ${ i }] From: ${ mail.from } — ${ mail.title }` );
+                }
+            } );
+
+            userList.forEach( ( user ) => {
+                if ( user.userId.toLowerCase().includes( keyword ) ||
+                     user.userName.toLowerCase().includes( keyword ) ) {
+                    results.push( `[user] ${ user.userId } / ${ user.userName }` );
+                }
+            } );
+
+            if ( results.length === 0 ) {
+                resolve( `No results found for "${ args.join( " " ) }"` );
+            } else {
+                resolve( [ `Search results for "${ args.join( " " ) }":`, ...results ] );
+            }
+        } );
+    },
+
+    send( args ) {
+        return new Promise( ( resolve, reject ) => {
+            function promptForRecipient() {
+                output( { text: [ "Enter recipient user ID:", "Available users: " + userList.map( ( u ) => u.userId ).join( ", " ) ], delayed: 0 } );
+                readPrompt( "To: " ).then( ( recipient ) => {
+                    const targetUser = userList.find( ( u ) => u.userId === recipient );
+                    if ( !targetUser ) {
+                        reject( new SendRecipientNotFoundError() );
+                        return;
+                    }
+                    promptForSubject( recipient );
+                } );
+            }
+
+            function promptForSubject( recipient ) {
+                readPrompt( "Subject: " ).then( ( title ) => {
+                    promptForBody( recipient, title || "(no subject)" );
+                } );
+            }
+
+            function promptForBody( recipient, title ) {
+                readPrompt( "Message: " ).then( ( body ) => {
+                    mailList.push( {
+                        from: userDatabase.userId,
+                        to: [ recipient ],
+                        title: title,
+                        body: body || "(empty)"
+                    } );
+                    resolve( "Message sent to " + recipient );
+                } );
+            }
+
+            if ( !args || args.length === 0 ) {
+                promptForRecipient();
+                return;
+            }
+
+            const recipient = args[ 0 ];
+            const targetUser = userList.find( ( u ) => u.userId === recipient );
+            if ( !targetUser ) {
+                reject( new SendRecipientNotFoundError() );
+                return;
+            }
+
+            if ( args.length > 1 ) {
+                const title = args[ 1 ];
+                const body = args.slice( 2 ).join( " " ) || title;
+                mailList.push( {
+                    from: userDatabase.userId,
+                    to: [ recipient ],
+                    title: title,
+                    body: body
+                } );
+                resolve( "Message sent to " + recipient );
+            } else {
+                promptForSubject( recipient );
+            }
         } );
     },
 
