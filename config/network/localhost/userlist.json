@@ -2,6 +2,11 @@
     {
         "userId": "8A73B5",
         "password": "trustno1",
-        "userName": "visitor"
+        "userName": "访客"
+    },
+     {
+        "userId": "lucy",
+        "password": "ihatecrime",
+        "userName": "露西·贝茨"
     }
 ]
