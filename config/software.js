@@ -9,6 +9,28 @@
  */
 /* eslint-disable no-inner-declarations, no-nested-ternary, no-sequences, no-unused-vars */
 
+function archiveCreate( title, classification, body ) {
+    if ( !title || !body ) {
+        return "Title and body are required.";
+    }
+    const count = archiveList ? archiveList.length : 0;
+    const id = `FBI-${ String( count + 1 ).padStart( 3, "0" ) }`;
+    const today = new Date();
+    const dateStr = `${ today.getFullYear() }-${ String( today.getMonth() + 1 ).padStart( 2, "0" ) }-${ String( today.getDate() ).padStart( 2, "0" ) }`;
+    const record = {
+        id: id,
+        title: title,
+        date: dateStr,
+        classification: classification || "CLASSIFIED",
+        body: body
+    };
+    if ( archiveList ) {
+        archiveList.push( record );
+    }
+    return `Record ${ id } created and archived. You can view it with: archive view ${ id }`;
+}
+
+
 function decrypt( args ) { // The same function can be used to encode text
     if ( args.length === 0 ) {
         return "<p>Some encrypted text must be provided: <code>decrypt 53CR3T T3XT</code></p>";

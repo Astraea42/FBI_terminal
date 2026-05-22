@@ -1,0 +1,38 @@
+[
+    {
+        "userId": "8A73B5",
+        "realName": "Fox Mulder",
+        "title": "Special Agent",
+        "department": "X-Files Division",
+        "email": "8A73B5@fbi.gov",
+        "bio": "I want to believe. Assigned to the X-Files Division investigating unexplained phenomena.",
+        "joined": "1993-03-06"
+    },
+    {
+        "userId": "TT3C4D",
+        "realName": "Dana Scully",
+        "title": "Special Agent",
+        "department": "X-Files Division",
+        "email": "TT3C4D@fbi.gov",
+        "bio": "Medical doctor and scientist assigned to debunk the X-Files. Faithful to the scientific method.",
+        "joined": "1993-03-06"
+    },
+    {
+        "userId": "AD5E6F",
+        "realName": "Walter Skinner",
+        "title": "Assistant Director",
+        "department": "Office of the Deputy Director",
+        "email": "AD5E6F@fbi.gov",
+        "bio": "Assistant Director overseeing the X-Files Division and special projects.",
+        "joined": "1985-09-12"
+    },
+    {
+        "userId": "admin",
+        "realName": "System Administrator",
+        "title": "IT Security Officer",
+        "department": "Information Technology",
+        "email": "admin@fbi.gov",
+        "bio": "System administrator responsible for maintaining FBI secure terminal infrastructure.",
+        "joined": "2020-01-01"
+    }
+]

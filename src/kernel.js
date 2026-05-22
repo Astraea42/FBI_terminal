@@ -4,6 +4,7 @@ let serverDatabase = {};
 let userDatabase = {};
 let userList = [];
 let mailList = [];
+let archiveList = [];
 let cmdLine_;
 let output_;
 let serverDate = { day: "", month: "", year: "", reference: "" };
@@ -13,7 +14,7 @@ function initDateObject() {
     const day = serverDatabase.day ? serverDatabase.day : date.getDate();
     const month = serverDatabase.month ? serverDatabase.month : date.getMonth() + 1;
     const year = serverDatabase.year ? serverDatabase.year : date.getFullYear();
-    const reference = serverDatabase.reference ? serverDatabase.reference : "(Solar System Standard Time)";
+    const reference = serverDatabase.reference ? serverDatabase.reference : "(太阳系标准时间)";
     serverDate = { day, month, year, reference };
 }
 
@@ -43,9 +44,9 @@ function setHeader( msg ) {
     <img src="${ imgUrl }" width="${ imgSize }" height="${ imgSize }"
          style="float: left; padding-right: 10px" class="${ serverDatabase.iconClass || "" }">
     <h2 style="letter-spacing: 4px">${ serverDatabase.serverName }</h2>
-    <p>Logged in: ${ serverDatabase.serverAddress } (&nbsp;${ dateStr }&nbsp;) </p>
+    <p>已登录: ${ serverDatabase.serverAddress } (&nbsp;${ dateStr }&nbsp;) </p>
     ${ serverDatabase.headerExtraHTML || "" }
-    <p>Enter "help" for more information.</p>
+    <p>输入 "help" 获取更多信息。</p>
     `;
     // Clear content:
     output_.innerHTML = "";
@@ -206,7 +207,7 @@ kernel.connectToServer = function connectToServer( serverAddress, userName, pass
                 $.get( `config/network/${ serverInfo.serverAddress }/mailserver.json`, ( mails ) => {
                     mailList = mails;
                 } );
-                setHeader( "Connection successful" );
+                setHeader( "连接成功" );
                 resolve();
             } else if ( userName ) {
                 $.get( `config/network/${ serverInfo.serverAddress }/userlist.json`, ( users ) => {
@@ -225,7 +226,7 @@ kernel.connectToServer = function connectToServer( serverAddress, userName, pass
                     $.get( `config/network/${ serverInfo.serverAddress }/mailserver.json`, ( mails ) => {
                         mailList = mails;
                     } );
-                    setHeader( "Connection successful" );
+                    setHeader( "连接成功" );
                     resolve();
                 } ).fail( () => {
                     reject( new AddressNotFoundError( serverAddress ) );
@@ -248,6 +249,15 @@ kernel.connectToServer = function connectToServer( serverAddress, userName, pass
  * @param {Object} cmdLineContainer The Input.cmdline right of the div.prompt
  * @param {Object} outputContainer The output element inside the div#container
  */
+// Allow external code to set the current user (used by auth overlay)
+kernel.setCurrentUser = function setCurrentUser( userId ) {
+    const user = userList.find( ( u ) => u.userId === userId );
+    if ( user ) {
+        userDatabase = user;
+        setHeader( "身份验证成功" );
+    }
+};
+
 kernel.init = function init( cmdLineContainer, outputContainer ) {
     return new Promise( ( resolve, reject ) => {
         cmdLine_ = document.querySelector( cmdLineContainer );
@@ -256,6 +266,8 @@ kernel.init = function init( cmdLineContainer, outputContainer ) {
         $.when(
             $.get( "config/software.json", ( softwareData ) => {
                 softwareInfo = softwareData;
+                $.get("config/records.json", (records) => { archiveList = records; });
+                $.get("config/profiles.json", (profiles) => { profileList = profiles; });
                 kernel.connectToServer( defaultServerAddress );
             } )
         )
@@ -334,53 +346,57 @@ system = {
                 Array.prototype.push.apply( cmdNames, progNames );
                 cmdNames.sort();
                 resolve( [
-                    "You can read the help of a specific command by entering as follows: 'help commandName'",
-                    "List of useful commands:",
+                    "输入 'help 命令名' 可查看该命令的详细帮助信息。",
+                    "可用命令列表：",
                     `<div class="ls-files">${ cmdNames.join( "<br>" ) }</div>`,
-                    "You can navigate in the commands usage history using the UP & DOWN arrow keys.",
-                    "The TAB key will provide command auto-completion."
+                    "可使用 ↑ ↓ 方向键浏览命令历史。",
+                    "按 TAB 键可自动补全命令。"
                 ] );
             } else if ( args[ 0 ] === "clear" ) {
-                resolve( [ "Usage:", "> clear", "The clear command will wipe the content of the terminal, but it will not affect the history." ] );
+                resolve( [ "用法:", "> clear", "清空终端屏幕内容，不影响命令历史。" ] );
             } else if ( args[ 0 ] === "date" ) {
-                resolve( [ "Usage:", "> date", "The date command will print the current date-time into terminal." ] );
+                resolve( [ "用法:", "> date", "显示当前日期和时间。" ] );
             } else if ( args[ 0 ] === "echo" ) {
-                resolve( [ "Usage:", "> echo args", "The echo command will print args into terminal." ] );
+                resolve( [ "用法:", "> echo 文本", "将输入的文本回显到终端。" ] );
             } else if ( args[ 0 ] === "help" ) {
-                resolve( [ "Usage:", "> help", "The default help message. It will show the commands available on the server." ] );
+                resolve( [ "用法:", "> help", "显示帮助信息，列出服务器上可用的所有命令。" ] );
             } else if ( args[ 0 ] === "history" ) {
-                resolve( [ "Usage:", "> history", "The history command will list all the commands you alread typed in this terminal." ] );
+                resolve( [ "用法:", "> history", "显示你在此终端中输入过的所有命令历史。" ] );
             } else if ( args[ 0 ] === "login" ) {
-                resolve( [ "Usage:", "> login username:password", "Switch account: log in as another registered user on the server, to access your data files and messages." ] );
+                resolve( [ "用法:", "> login 用户名:密码", "切换账户：以其他注册用户的身份登录，以访问其数据文件和消息。" ] );
             } else if ( args[ 0 ] === "mail" ) {
-                resolve( [ "Usage:", "> mail", "If you're logged in you can list your mail messages if any." ] );
+                resolve( [ "用法:", "> mail", "> mail inbox", "> mail sent", "查看邮箱中的消息。'inbox' 显示收件箱，'sent' 显示已发送。" ] );
             } else if ( args[ 0 ] === "ping" ) {
                 resolve( [
-                    "Usage:",
-                    "> ping address",
-                    "The ping command will try to reach a valid address.",
-                    "If the ping doesn't return a valid response, the address may be incorrect, may not exist or can't be reached locally."
+                    "用法:",
+                    "> ping 地址",
+                    "尝试连接一个有效的服务器地址。",
+                    "如果 ping 没有返回有效响应，说明地址可能不正确、不存在或无法从本地访问。"
                 ] );
             } else if ( args[ 0 ] === "read" ) {
-                resolve( [ "Usage:", "> read x", "If you're logged in you can read your mail messages if any." ] );
+                resolve( [ "用法:", "> read <索引>", "> read sent <索引>", "读取邮件消息。使用 'read sent <n>' 读取已发送的邮件。" ] );
             } else if ( args[ 0 ] === "grep" ) {
-                resolve( [ "Usage:", "> grep keyword", "Search all messages and user data for the specified keyword." ] );
+                resolve( [ "用法:", "> grep 关键词", "在消息、用户数据、档案和存档中搜索指定关键词。" ] );
             } else if ( args[ 0 ] === "send" ) {
-                resolve( [ "Usage:", "> send [username]", "Send a message to another user. You will be prompted for details." ] );
+                resolve( [ "用法:", "> send [用户名]", "向其他用户发送消息。系统将提示输入详细信息。" ] );
             } else if ( args[ 0 ] === "register" ) {
-                resolve( [ "Usage:", "> register [userId password displayName]", "Register a new user on this server. Omit arguments for interactive mode." ] );
+                resolve( [ "用法:", "> register [用户ID 密码 显示名称]", "在服务器上注册新用户。省略参数将进入交互模式。" ] );
+            } else if ( args[ 0 ] === "profile" ) {
+                resolve( [ "用法:", "> profile list", "> profile view <用户ID>", "> profile edit", "查看成员档案或编辑自己的档案。" ] );
+            } else if ( args[ 0 ] === "archive" ) {
+                resolve( [ "用法:", "> archive list | view <ID> | new", "管理机密存档：列出所有记录、查看详情或创建新记录。" ] );
             } else if ( args[ 0 ] === "ssh" ) {
                 resolve( [
-                    "Usage:",
-                    "> ssh address",
-                    "> ssh username@address",
-                    "> ssh username:password@address",
-                    "You can connect to a valid address to access a specific server on the Internet.",
-                    "You may need to specify a username if the server has no default user.",
-                    "You may need to specify a password if the user account is protected."
+                    "用法:",
+                    "> ssh 地址",
+                    "> ssh 用户名@地址",
+                    "> ssh 用户名:密码@地址",
+                    "连接到互联网上的指定服务器。",
+                    "如果服务器没有默认用户，可能需要指定用户名。",
+                    "如果用户账户受密码保护，则需要输入密码。"
                 ] );
             } else if ( args[ 0 ] === "whoami" ) {
-                resolve( [ "Usage:", "> whoami", "Display the server you are currently connected to, and the login you are registered with." ] );
+                resolve( [ "用法:", "> whoami", "显示当前连接的服务器以及登录用户信息。" ] );
             } else if ( args[ 0 ] in softwareInfo ) {
                 const customProgram = programs[ args[ 0 ] ];
                 if ( customProgram.help ) {
@@ -389,7 +405,7 @@ system = {
             } else if ( args[ 0 ] in system && args[ 0 ] !== "dumpdb" ) {
                 console.error( `Missing help message for system command: ${ args[ 0 ] }` );
             } else {
-                resolve( [ `Unknow command ${ args[ 0 ] }` ] );
+                resolve( [ `未知命令：${ args[ 0 ] }` ] );
             }
         } );
     },
@@ -422,7 +438,7 @@ system = {
                 return;
             }
             userDatabase = matchingUser;
-            setHeader( "Login successful" );
+            setHeader( "登录成功" );
             resolve();
         } );
     },
@@ -442,7 +458,7 @@ system = {
     register( args ) {
         return new Promise( ( resolve, reject ) => {
             function promptForUserId() {
-                readPrompt( "New user ID: " ).then( ( userId ) => {
+                readPrompt( "新用户ID: " ).then( ( userId ) => {
                     if ( !userId ) {
                         reject( new UsernameIsEmptyError() );
                         return;
@@ -456,19 +472,19 @@ system = {
             }
 
             function promptForPassword( userId ) {
-                readPrompt( "Password: " ).then( ( password ) => {
+                readPrompt( "密码: " ).then( ( password ) => {
                     promptForName( userId, password );
                 } );
             }
 
             function promptForName( userId, password ) {
-                readPrompt( "Display name: " ).then( ( userName ) => {
+                readPrompt( "显示名称: " ).then( ( userName ) => {
                     userList.push( {
                         userId: userId,
                         password: password || "",
                         userName: userName || userId
                     } );
-                    resolve( `User ${ userId } registered successfully. You can now login with: login ${ userId }:${ password || "(no password)" }` );
+                    resolve( `用户 ${ userId } 注册成功。现在可以使用以下命令登录：login ${ userId }:${ password || "(无密码)" }` );
                 } );
             }
 
@@ -485,11 +501,170 @@ system = {
                     password: password,
                     userName: userName
                 } );
-                resolve( `User ${ userId } registered successfully. You can now login with: login ${ userId }:${ password }` );
+                resolve( `用户 ${ userId } 注册成功。现在可以使用以下命令登录：login ${ userId }:${ password }` );
                 return;
             }
 
             promptForUserId();
+        } );
+    },
+
+    archive( args ) {
+        return new Promise( ( resolve, reject ) => {
+            if ( !args || args.length === 0 ) {
+                resolve( "用法: archive list | view <ID> | new" );
+                return;
+            }
+            const subcmd = args[ 0 ].toLowerCase();
+
+            if ( subcmd === "list" ) {
+                if ( !archiveList || archiveList.length === 0 ) {
+                    resolve( "存档中未找到记录。" );
+                    return;
+                }
+                const lines = [ "--- 机密存档 ---", "" ];
+                archiveList.forEach( ( record ) => {
+                    lines.push( `[${ record.id }] ${ record.title }` );
+                    lines.push( `    ${ record.date } | ${ record.classification }` );
+                    lines.push( "" );
+                } );
+                lines.push( `记录总数: ${ archiveList.length }` );
+                resolve( lines );
+                return;
+            }
+
+            if ( subcmd === "view" ) {
+                const recordId = args[ 1 ];
+                if ( !recordId ) {
+                    resolve( "用法: archive view <记录ID>" );
+                    return;
+                }
+                const record = archiveList.find( ( r ) => r.id.toUpperCase() === recordId.toUpperCase() );
+                if ( !record ) {
+                    resolve( `存档中未找到记录"${ recordId }"。` );
+                    return;
+                }
+                resolve( [
+                    "=================================================================",
+                    `记录ID: ${ record.id }`,
+                    `标题: ${ record.title }`,
+                    `日期: ${ record.date }`,
+                    `密级: ${ record.classification }`,
+                    "=================================================================",
+                    "",
+                    record.body,
+                    "",
+                    "=================================================================",
+                    "文件结束"
+                ] );
+                return;
+            }
+
+            if ( subcmd === "new" ) {
+                readPrompt( "标题: " ).then( ( title ) => {
+                    if ( !title ) {
+                        resolve( "存档创建已取消。" );
+                        return;
+                    }
+                    readPrompt( "密级 (绝密 / 机密 / 秘密): " ).then( ( classification ) => {
+                        readPrompt( "正文内容: " ).then( ( body ) => {
+                            const result = archiveCreate( title, classification || "机密", body );
+                            resolve( result );
+                        } );
+                    } );
+                } );
+                return;
+            }
+
+            resolve( `未知子命令: ${ subcmd }. 用法: archive list | view <ID> | new` );
+        } );
+    },
+
+    profile( args ) {
+        return new Promise( ( resolve, reject ) => {
+            if ( !args || args.length === 0 || args[ 0 ] === "list" ) {
+                if ( !profileList || profileList.length === 0 ) {
+                    resolve( "未找到档案。" );
+                    return;
+                }
+                const lines = [ "--- 成员档案 ---", "" ];
+                profileList.forEach( ( p ) => {
+                    const user = userList.find( ( u ) => u.userId === p.userId );
+                    const displayName = user ? user.userName : p.realName;
+                    lines.push( `${ p.userId } — ${ displayName }` );
+                    lines.push( `    ${ p.title }, ${ p.department }` );
+                    lines.push( "" );
+                } );
+                lines.push( `成员总数: ${ profileList.length }` );
+                resolve( lines );
+                return;
+            }
+
+            if ( args[ 0 ] === "view" ) {
+                const targetId = args[ 1 ];
+                if ( !targetId ) {
+                    resolve( "用法: profile view <用户ID>" );
+                    return;
+                }
+                const profile = profileList.find( ( p ) => p.userId.toUpperCase() === targetId.toUpperCase() );
+                if ( !profile ) {
+                    resolve( `未找到用户 "${ targetId }" 的档案。` );
+                    return;
+                }
+                const user = userList.find( ( u ) => u.userId === profile.userId );
+                const displayName = user ? user.userName : profile.realName;
+                resolve( [
+                    "==============================================",
+                    `用户ID:     ${ profile.userId }`,
+                    `姓名:       ${ profile.realName } (${ displayName })`,
+                    `职位:       ${ profile.title }`,
+                    `部门:       ${ profile.department }`,
+                    `邮箱:       ${ profile.email }`,
+                    `加入日期:   ${ profile.joined }`,
+                    "==============================================",
+                    "",
+                    profile.bio || "(no biography)",
+                    "",
+                    "==============================================",
+                    "档案结束"
+                ] );
+                return;
+            }
+
+            if ( args[ 0 ] === "edit" ) {
+                let currentProfile = profileList.find( ( p ) => p.userId === userDatabase.userId );
+                if ( !currentProfile ) {
+                    currentProfile = {
+                        userId: userDatabase.userId,
+                        realName: userDatabase.userName || "",
+                        title: "",
+                        department: "",
+                        email: "",
+                        bio: "",
+                        joined: new Date().toISOString().split( "T" )[ 0 ]
+                    };
+                    profileList.push( currentProfile );
+                }
+                readPrompt( `真实姓名 [${ currentProfile.realName }]: ` ).then( ( realName ) => {
+                    if ( realName ) currentProfile.realName = realName;
+                    readPrompt( `职位 [${ currentProfile.title }]: ` ).then( ( title ) => {
+                        if ( title ) currentProfile.title = title;
+                        readPrompt( `部门 [${ currentProfile.department }]: ` ).then( ( department ) => {
+                            if ( department ) currentProfile.department = department;
+                            readPrompt( `邮箱 [${ currentProfile.email }]: ` ).then( ( email ) => {
+                                if ( email ) currentProfile.email = email;
+                                readPrompt( `简介 [${ currentProfile.bio }]: ` ).then( ( bio ) => {
+                                    if ( bio ) currentProfile.bio = bio;
+                                    resolve( "档案更新成功。" );
+                                } );
+                            } );
+                        } );
+                    } );
+                } );
+                return;
+            }
+
+            resolve( `未知子命令: ${ args[ 0 ] }. 用法: profile list | view <用户ID> | edit` );
         } );
     },
 
@@ -500,31 +675,63 @@ system = {
         } );
     },
 
-    mail() {
+    mail( args ) {
         return new Promise( ( resolve, reject ) => {
-            const messageList = mailList.filter( ( mail ) => mail.to.includes( userDatabase.userId ) )
-                .map( ( mail, i ) => `[${ i }] ${ mail.title }` );
-            if ( messageList.length === 0 ) {
-                reject( new MailServerIsEmptyError() );
-                return;
+            const showSent = args && args.length > 0 && ( args[ 0 ] === "sent" || args[ 0 ] === "-s" );
+            const showInbox = !showSent;
+
+            if ( showInbox ) {
+                const messageList = mailList.filter( ( mail ) => mail.to.includes( userDatabase.userId ) )
+                    .map( ( mail, i ) => `[${ i }] ${ mail.title }` );
+                if ( messageList.length === 0 ) {
+                    reject( new MailServerIsEmptyError() );
+                    return;
+                }
+                resolve( [ "--- 收件箱 ---", "", ...messageList ] );
+            } else {
+                const sentList = mailList.filter( ( mail ) => mail.from === userDatabase.userId )
+                    .map( ( mail, i ) => `[${ i }] To: ${ mail.to.join( "," ) } — ${ mail.title }` );
+                if ( sentList.length === 0 ) {
+                    resolve( "暂无已发送消息。" );
+                    return;
+                }
+                resolve( [ "--- 发件箱 ---", "", ...sentList ] );
             }
-            resolve( messageList );
         } );
     },
 
     read( args ) {
         return new Promise( ( resolve, reject ) => {
-            const mailIndex = Number( args[ 0 ] );
-            const messageList = mailList.filter( (mail) => mail.to.includes( userDatabase.userId ) );
-            const mailAtIndex = messageList[ mailIndex ];
-            if ( !mailAtIndex || !mailAtIndex.to.includes( userDatabase.userId ) ) {
+            if ( !args || args.length === 0 ) {
                 reject( new InvalidMessageKeyError() );
                 return;
             }
+
+            const showSent = args[ 0 ] === "sent" || args[ 0 ] === "-s";
+            let mailIndex;
+            if ( showSent ) {
+                mailIndex = Number( args[ 1 ] );
+            } else {
+                mailIndex = Number( args[ 0 ] );
+            }
+
+            let messageList;
+            if ( showSent ) {
+                messageList = mailList.filter( ( mail ) => mail.from === userDatabase.userId );
+            } else {
+                messageList = mailList.filter( ( mail ) => mail.to.includes( userDatabase.userId ) );
+            }
+
+            const mailAtIndex = messageList[ mailIndex ];
+            if ( !mailAtIndex ) {
+                reject( new InvalidMessageKeyError() );
+                return;
+            }
+
             let message = [];
             message.push( "---------------------------------------------" );
-            message.push( `From: ${ mailAtIndex.from }` );
-            message.push( `To: ${ userDatabase.userId }@${ serverDatabase.terminalID }` );
+            message.push( `发件人: ${ mailAtIndex.from }` );
+            message.push( `收件人: ${ mailAtIndex.to.join( ", " ) }@${ serverDatabase.terminalID }` );
             message.push( "---------------------------------------------" );
             message = [ ...message, ...mailAtIndex.body.split( "  " ) ];
             resolve( message );
@@ -543,21 +750,43 @@ system = {
             mailList.forEach( ( mail, i ) => {
                 if ( mail.title.toLowerCase().includes( keyword ) ||
                      mail.body.toLowerCase().includes( keyword ) ) {
-                    results.push( `[mail ${ i }] From: ${ mail.from } — ${ mail.title }` );
+                    results.push( `[邮件 ${ i }] 来自: ${ mail.from } — ${ mail.title }` );
                 }
             } );
 
             userList.forEach( ( user ) => {
                 if ( user.userId.toLowerCase().includes( keyword ) ||
                      user.userName.toLowerCase().includes( keyword ) ) {
-                    results.push( `[user] ${ user.userId } / ${ user.userName }` );
+                    results.push( `[用户] ${ user.userId } / ${ user.userName }` );
                 }
             } );
 
+            if ( archiveList && archiveList.length > 0 ) {
+                archiveList.forEach( ( record ) => {
+                    if ( record.title.toLowerCase().includes( keyword ) ||
+                         record.body.toLowerCase().includes( keyword ) ||
+                         record.id.toLowerCase().includes( keyword ) ) {
+                        results.push( `[存档 ${ record.id }] ${ record.title } (${ record.classification })` );
+                    }
+                } );
+            }
+
+            if ( profileList && profileList.length > 0 ) {
+                profileList.forEach( ( p ) => {
+                    if ( p.userId.toLowerCase().includes( keyword ) ||
+                         p.realName.toLowerCase().includes( keyword ) ||
+                         p.title.toLowerCase().includes( keyword ) ||
+                         p.department.toLowerCase().includes( keyword ) ||
+                         p.bio.toLowerCase().includes( keyword ) ) {
+                        results.push( `[档案 ${ p.userId }] ${ p.realName } — ${ p.title }` );
+                    }
+                } );
+            }
+
             if ( results.length === 0 ) {
-                resolve( `No results found for "${ args.join( " " ) }"` );
+                resolve( `未找到与 "${ args.join( " " ) }" 相关的结果` );
             } else {
-                resolve( [ `Search results for "${ args.join( " " ) }":`, ...results ] );
+                resolve( [ `"${ args.join( " " ) }" 的搜索结果:`, ...results ] );
             }
         } );
     },
@@ -565,8 +794,8 @@ system = {
     send( args ) {
         return new Promise( ( resolve, reject ) => {
             function promptForRecipient() {
-                output( { text: [ "Enter recipient user ID:", "Available users: " + userList.map( ( u ) => u.userId ).join( ", " ) ], delayed: 0 } );
-                readPrompt( "To: " ).then( ( recipient ) => {
+                output( { text: [ "请输入收件人用户ID:", "可用用户: " + userList.map( ( u ) => u.userId ).join( ", " ) ], delayed: 0 } );
+                readPrompt( "收件人: " ).then( ( recipient ) => {
                     const targetUser = userList.find( ( u ) => u.userId === recipient );
                     if ( !targetUser ) {
                         reject( new SendRecipientNotFoundError() );
@@ -577,20 +806,20 @@ system = {
             }
 
             function promptForSubject( recipient ) {
-                readPrompt( "Subject: " ).then( ( title ) => {
+                readPrompt( "主题: " ).then( ( title ) => {
                     promptForBody( recipient, title || "(no subject)" );
                 } );
             }
 
             function promptForBody( recipient, title ) {
-                readPrompt( "Message: " ).then( ( body ) => {
+                readPrompt( "消息内容: " ).then( ( body ) => {
                     mailList.push( {
                         from: userDatabase.userId,
                         to: [ recipient ],
                         title: title,
                         body: body || "(empty)"
                     } );
-                    resolve( "Message sent to " + recipient );
+                    resolve( "消息已发送至 " + recipient );
                 } );
             }
 
@@ -615,7 +844,7 @@ system = {
                     title: title,
                     body: body
                 } );
-                resolve( "Message sent to " + recipient );
+                resolve( "消息已发送至 " + recipient );
             } else {
                 promptForSubject( recipient );
             }
@@ -638,7 +867,7 @@ system = {
 
     telnet() {
         return new Promise( ( _, reject ) => {
-            reject( new Error( "telnet is unsecure and is deprecated - use ssh instead" ) );
+            reject( new Error( "telnet 不安全且已弃用 — 请使用 ssh 代替" ) );
         } );
     },
 

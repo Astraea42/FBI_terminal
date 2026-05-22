@@ -137,7 +137,7 @@ function Terminal() {
                             output( error.message );
                         } else { // untyped = unexpected error
                             console.exception( error );
-                            output( `kernel failure - ${ error.constructor.name }: ${ error.message }` );
+                            output( `内核错误 - ${ error.constructor.name }: ${ error.message }` );
                         }
                     } );
             } catch ( error ) {
@@ -146,7 +146,7 @@ function Terminal() {
                     output();
                     return;
                 }
-                output( `${ cmd }: command not found` );
+                output( `${ cmd }: 命令未找到` );
             }
         }
     }
@@ -192,9 +192,13 @@ function Terminal() {
  * The `Document.ready` function to initialize everything.
  */
 $( () => {
-    // Initializing Terminal Object
+    // First initialize kernel to load all data (users, mail, archives)
     kernel.init( "#input-line .cmdline", "#container output" )
         .then( () => {
-            term = new Terminal();
+            // Then show the FBI Secure Access Portal login overlay
+            AuthOverlay.showLogin( ( userId ) => {
+                // Once authenticated, initialize the Terminal object
+                term = new Terminal();
+            } );
         } );
 } );

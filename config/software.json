@@ -34,5 +34,6 @@
     },
     "artifact": {},
     "decrypt": {},
-    "identify": {}
+    "identify": {},
+    "archiveCreate": {}
 }
