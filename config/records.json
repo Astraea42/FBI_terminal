@@ -1,37 +1,10 @@
 [
     {
-        "id": "FBI-001",
-        "title": "Project: Echelon Watch — Global Surveillance Network",
-        "date": "2022-11-04",
-        "classification": "TOP SECRET",
-        "body": "ECHELON WATCH is a joint task force between NSA and FBI for global electronic surveillance. Key objectives include monitoring of encrypted communications across 147 countries. Domestic application requires FISA court approval. Budget allocation for FY2023: $2.4 billion. Director's Note: This program does not exist."
-    },
-    {
-        "id": "FBI-002",
-        "title": "Subject: Fox Mulder — Personnel File",
-        "date": "2016-07-23",
-        "classification": "CLASSIFIED",
-        "body": "Agent Fox William Mulder (Badge: 8A73B5). Assigned to Violent Crimes Section, later reassigned to X-Files Division. Psychological profile indicates obsessive tendencies toward paranormal phenomena. Multiple disciplinary actions for insubordination. Note: Agent Mulder's clearance level should not grant access to files above his pay grade. Monitor closely."
-    },
-    {
-        "id": "FBI-003",
-        "title": "Incident Report: Unauthorized Access — Datacenter 7",
-        "date": "2023-01-17",
-        "classification": "TOP SECRET",
-        "body": "On 2023-01-14 at 0342 hours, an unauthorized breach was detected at Datacenter 7 (Quantico, VA). Perimeter logs show no physical intrusion. Data analysis suggests the breach originated from an internal terminal. Files accessed: ECHELON-related documentation. Investigation assigned to Internal Affairs. Status: OPEN."
-    },
-    {
-        "id": "FBI-004",
-        "title": "Operation: Nightfall — Counterintelligence",
-        "date": "2023-03-28",
-        "classification": "TOP SECRET",
-        "body": "OPERATION NIGHTFALL targets a sleeper cell operating within the Washington D.C. metropolitan area. Suspects are believed to have infiltrated three government agencies. Wiretap authorization granted under FISA. Surveillance teams are active. Next phase requires judicial approval. Caution: Do not discuss this operation over unsecured channels."
-    },
-    {
-        "id": "FBI-005",
-        "title": "Evidence Log: Unidentified Aerial Phenomena",
-        "date": "2023-06-12",
-        "classification": "CLASSIFIED",
-        "body": "Evidence recovered from crash site near Roswell, NM (Case # UAP-1947-07). Current location: Storage Vault 12-B, Quantico. Items include: metallic alloy fragments (non-terrestrial origin analysis PENDING), unknown energy source (inert), documentation in unknown language. Access requires Level 5 clearance and written authorization from Deputy Director."
+        "id": "AFT-001",
+        "title": "针对逾越天使教会非法囤积武器的调查进展",
+        "date": "2008-06-30",
+        "classification": "非密但敏感",
+        "body": "过去五年间，逾越天使教会的贝尔福夫妇合法购入了数把小型枪支，但考虑到教会信徒有大量生存主义者与白人至上主义者，且持续批判美国政府为邪恶蛇头，我们强烈怀疑他们藏匿了非法武器与炸药。2008年6月27日，一支AFT小队突袭了逾越天使的教堂，但没有发现任何非法登记的枪支与武装"
     }
+    
 ]
