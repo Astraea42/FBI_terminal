@@ -195,10 +195,6 @@ $( () => {
     // First initialize kernel to load all data (users, mail, archives)
     kernel.init( "#input-line .cmdline", "#container output" )
         .then( () => {
-            // Then show the FBI Secure Access Portal login overlay
-            AuthOverlay.showLogin( ( userId ) => {
-                // Once authenticated, initialize the Terminal object
-                term = new Terminal();
-            } );
+            term = new Terminal();
         } );
 } );
